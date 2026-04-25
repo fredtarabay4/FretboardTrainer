@@ -3,32 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Fretboard Master Pro</title>
-    <style>
-        :root { --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b; }
-        body { font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        .container { width: 100%; max-width: 900px; text-align: center; }
-        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
-        select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; }
-        .string-selector { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .s-btn { background: #444; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
-        .s-btn.active { background: var(--accent); border-color: #fff; }
-        .drill-area { min-height: 140px; margin-bottom: 20px; }
-        #prompt-display { font-size: 4rem; font-weight: 900; color: var(--highlight); margin: 10px 0; }
-        .fb-container { overflow-x: auto; width: 100%; background: #111; border-radius: 12px; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
-        .fretboard { display: grid; background: #3d2b1f; min-width: 1100px; height: 260px; }
-        .fret { border-right: 2px solid var(--fret); position: relative; display: flex; flex-direction: column-reverse; justify-content: space-around; }
-        .nut { border-right: 10px solid var(--nut) !important; background: rgba(0,0,0,0.3); }
-        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; background: #666; border-radius: 50%; z-index: 1; }
-        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
-        .str.disabled { opacity: 0.1; pointer-events: none; }
-        .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
-        .marker { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .active-n .marker { display: block; }
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; }
-        #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
-    </style>
+    <title>Fretboard Trainer</title>
+<style>
+    :root { 
+        --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; 
+        --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b; 
+    }
+    body { 
+        font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); 
+        margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
+        min-height: 100vh;
+    }
+    .container { width: 100%; max-width: 1000px; text-align: center; }
+    
+    /* Layout for Settings */
+    .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
+    select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; }
+    
+    /* Fretboard Container - This is the "Window" */
+    .fb-container { 
+        width: 100%; 
+        overflow-x: scroll; /* Force scroll capability */
+        overflow-y: hidden;
+        background: #111; 
+        border-radius: 12px; 
+        margin: 20px 0;
+        border: 2px solid #444;
+        -webkit-overflow-scrolling: touch; /* Momentum scroll for Pixel 9 */
+    }
+
+    /* The Fretboard - This is the "Canvas" that must be wider than the window */
+    .fretboard { 
+        display: grid; 
+        background: #3d2b1f; 
+        min-width: 1250px; /* Ensure this is wide enough for 12 frets */
+        height: 280px; 
+    }
+
+    .fret { 
+        border-right: 2px solid var(--fret); 
+        position: relative; 
+        display: flex; 
+        flex-direction: column-reverse; 
+        justify-content: space-around;
+        box-sizing: border-box;
+    }
+
+    .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
+    
+    .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; }
+    
+    .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
+    .str.disabled { opacity: 0.1; pointer-events: none; }
+    .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
+    
+    .marker { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; }
+    .active-n .marker { display: block; }
+    
+    .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; }
+    #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
+</style>
 </head>
 <body>
     <div class="container">
