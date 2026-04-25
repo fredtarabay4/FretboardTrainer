@@ -1,13 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  // This must match your repository name exactly
   basePath: '/FretboardTrainer',
-  // Ensures images and CSS load from the correct subfolder
+  // Add this to ensure CSS/JS files load from the correct subfolder
+  assetPrefix: '/FretboardTrainer/',
   images: {
     unoptimized: true,
   },
-  // Helps with routing on static hosts
   trailingSlash: true,
 };
 
