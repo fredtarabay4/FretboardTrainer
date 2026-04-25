@@ -3,67 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Fretboard Trainer</title>
-<style>
-    :root { 
-        --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; 
-        --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b; 
-    }
-    body { 
-        font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); 
-        margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
-        min-height: 100vh;
-    }
-    .container { width: 100%; max-width: 1000px; text-align: center; }
-    
-    /* Layout for Settings */
-    .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
-    select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; }
-    
-    /* Fretboard Container - This is the "Window" */
-    .fb-container { 
-        width: 100%; 
-        overflow-x: scroll; /* Force scroll capability */
-        overflow-y: hidden;
-        background: #111; 
-        border-radius: 12px; 
-        margin: 20px 0;
-        border: 2px solid #444;
-        -webkit-overflow-scrolling: touch; /* Momentum scroll for Pixel 9 */
-    }
+    <title>Fretboard Master Pro</title>
+    <style>
+        :root { 
+            --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; 
+            --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b; 
+        }
+        body { 
+            font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); 
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; touch-action: manipulation;
+        }
+        .container { width: 100%; max-width: 1000px; text-align: center; }
+        
+        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
+        select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; }
+        
+        /* The Window */
+        .fb-container { 
+            width: 100%; 
+            overflow-x: auto; 
+            background: #111; 
+            border-radius: 12px; 
+            margin: 20px 0;
+            border: 2px solid #444;
+            display: block;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
 
-    /* The Fretboard - This is the "Canvas" that must be wider than the window */
-    .fretboard { 
-        display: grid; 
-        background: #3d2b1f; 
-        min-width: 1250px; /* Ensure this is wide enough for 12 frets */
-        height: 280px; 
-    }
+        /* The Board - Fixed Width Math: 13 columns * 90px = 1170px */
+        .fretboard { 
+            display: grid; 
+            background: #3d2b1f; 
+            width: 1170px; 
+            height: 280px; 
+            grid-template-columns: repeat(13, 90px);
+        }
 
-    .fret { 
-        border-right: 2px solid var(--fret); 
-        position: relative; 
-        display: flex; 
-        flex-direction: column-reverse; 
-        justify-content: space-around;
-        box-sizing: border-box;
-    }
+        .fret { 
+            border-right: 2px solid var(--fret); 
+            position: relative; 
+            display: flex; 
+            flex-direction: column-reverse; 
+            justify-content: space-around;
+            height: 100%;
+        }
 
-    .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
-    
-    .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; }
-    
-    .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
-    .str.disabled { opacity: 0.1; pointer-events: none; }
-    .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
-    
-    .marker { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; }
-    .active-n .marker { display: block; }
-    
-    .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; }
-    #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
-</style>
+        /* Distinct Nut */
+        .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); width: 90px; }
+        
+        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; }
+        .double-dot-top { top: 25%; }
+        .double-dot-bottom { top: 75%; }
+
+        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
+        .str.disabled { opacity: 0.05; pointer-events: none; }
+        .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
+        
+        .marker { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .active-n .marker { display: block; }
+        
+        .string-selector { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
+        .s-btn { background: #444; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
+        .s-btn.active { background: var(--accent); border-color: #fff; }
+
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -80,12 +88,12 @@
                 <option value="id">Identify Note</option>
             </select>
         </div>
-        <div style="text-align: left; margin-bottom: 10px;">
-            <input type="checkbox" id="acc" style="transform: scale(1.3);"> Include Sharps
+        <div style="text-align: left; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="acc" style="width: 20px; height: 20px;"> Include Sharps
         </div>
         <div class="string-selector" id="toggles"></div>
         <div class="drill-area">
-            <div id="prompt-txt">Find:</div>
+            <div id="prompt-txt" style="font-size: 1.1rem; opacity: 0.8;">Find:</div>
             <div id="prompt-display">C</div>
             <div id="feedback"></div>
         </div>
@@ -102,11 +110,11 @@
 
         function render() {
             const b = document.getElementById('board'), inst = document.getElementById('inst').value, t = tunings[inst];
-            b.innerHTML = ''; b.style.gridTemplateColumns = `repeat(13, 1fr)`;
+            b.innerHTML = ''; 
             for(let f=0; f<=12; f++) {
                 const div = document.createElement('div'); div.className = `fret ${f===0?'nut':''}`;
                 if([3,5,7,9].includes(f)) div.innerHTML = '<div class="dot"></div>';
-                if(f===12) div.innerHTML = '<div class="dot" style="top:25%"></div><div class="dot" style="top:75%"></div>';
+                if(f===12) div.innerHTML = '<div class="dot double-dot-top"></div><div class="dot double-dot-bottom"></div>';
                 t.forEach((o, s) => {
                     const l = document.createElement('div');
                     l.className = `str ${active.includes(s)?'':'disabled'}`;
@@ -140,13 +148,18 @@
             if(m==='id') {
                 document.getElementById('btns').style.display='grid'; document.getElementById('prompt-display').innerText='?';
                 const lines = Array.from(document.querySelectorAll('.str:not(.disabled)')).filter(l => pool.includes(l.dataset.n));
-                const p = lines[Math.floor(Math.random()*lines.length)]; p.classList.add('active-n'); currentN = p.dataset.n;
+                if(lines.length) {
+                    const p = lines[Math.floor(Math.random()*lines.length)]; p.classList.add('active-n'); currentN = p.dataset.n;
+                }
             } else {
                 document.getElementById('btns').style.display='none'; currentN = pool[Math.floor(Math.random()*pool.length)];
                 document.getElementById('prompt-display').innerText = currentN;
                 if(m==='target') {
                     targetS = active[Math.floor(Math.random()*active.length)];
+                    document.getElementById('prompt-txt').innerText = `Find ${currentN} on highlighted string:`;
                     document.querySelectorAll(`.str[data-s="${targetS}"]`).forEach(s => s.classList.add('target'));
+                } else {
+                    document.getElementById('prompt-txt').innerText = `Find any ${currentN}:`;
                 }
             }
         }
@@ -176,6 +189,7 @@
             });
             next();
         };
+
         updateT(); render(); 
         const cont = document.getElementById('btns'); notes.filter(n => !n.includes('#')).forEach(n => {
             const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
