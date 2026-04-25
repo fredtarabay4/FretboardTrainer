@@ -3,178 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fretboard Master Pro</title>
+    <title>Fretboard Master</title>
     <style>
-        :root { 
-            --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; 
-            --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b; 
-        }
-        body { 
-            font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); 
-            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; touch-action: manipulation;
-        }
-        .container { width: 100%; max-width: 1400px; text-align: center; }
-        
-        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
-        select { width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; }
-        
-        .fb-container { 
-            width: 100%; 
-            overflow-x: auto; 
-            background: #111; 
-            border-radius: 10px; 
-            margin: 10px 0;
-            border: 2px solid #444;
-            -webkit-overflow-scrolling: touch;
-        }
-
-        .fretboard { 
-            display: grid; 
-            background: #3d2b1f; 
-            width: 100%; 
-            min-width: 440px; /* Fits Pixel 9 Pro XL width */
-            height: 220px; 
-            grid-template-columns: 30px repeat(12, 1fr); 
-        }
-
-        .fret { 
-            border-right: 1.5px solid var(--fret); 
-            position: relative; 
-            display: flex; 
-            flex-direction: column-reverse; 
-            justify-content: space-around;
-            padding: 5px 0;
-        }
-
-        .nut { border-right: 8px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
-        
+        :root { --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: manipulation; }
+        .container { width: 100%; max-width: 1200px; text-align: center; }
+        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        select { width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 14px; }
+        .fb-container { width: 100%; overflow-x: auto; background: #111; border-radius: 10px; margin: 10px 0; border: 2px solid #444; -webkit-overflow-scrolling: touch; }
+        .fretboard { display: grid; background: #3d2b1f; width: 100%; min-width: 440px; height: 200px; grid-template-columns: 35px repeat(12, 1fr); }
+        .fret { border-right: 1.5px solid var(--fret); position: relative; display: flex; flex-direction: column-reverse; justify-content: space-around; padding: 10px 0; }
+        .nut { border-right: 10px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
         .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
-        .double-dot-top { top: 25%; }
-        .double-dot-bottom { top: 75%; }
-
-        /* The String itself */
-        .str { 
-            height: 10px; /* Hitbox for the string */
-            width: 100%; 
-            position: relative; 
-            z-index: 2; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-        }
-        /* The Visual Line inside the hitbox */
-        .str::after {
-            content: '';
-            width: 100%;
-            height: var(--t);
-            background: var(--string);
-            display: block;
-        }
-        .str.disabled { opacity: 0.05; pointer-events: none; }
-        .str.target::after { background: var(--target); box-shadow: 0 0 10px var(--target); }
-        
-        .marker { 
-            position: absolute; 
-            width: 26px; height: 26px; 
-            border-radius: 50%; 
-            background: var(--highlight); 
-            left: 50%; transform: translateX(-50%); 
-            display: none; border: 2px solid #fff; 
-            z-index: 3;
-        }
+        .double-dot-top { top: 25%; } .double-dot-bottom { top: 75%; }
+        .str { height: 15px; width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
+        .str-line { width: 100%; background: var(--string); pointer-events: none; }
+        .disabled { opacity: 0.1; pointer-events: none; }
+        .marker { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; z-index: 3; }
         .active-n .marker { display: block; }
-        
-        .string-selector { display: flex; gap: 5px; justify-content: center; margin: 5px 0; flex-wrap: wrap; }
-        .s-btn { background: #444; padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 0.8rem; border: 2px solid transparent; }
+        .target .str-line { background: #ffeb3b; box-shadow: 0 0 8px #ffeb3b; }
+        .s-btn { background: #444; padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; border: 2px solid transparent; cursor: pointer; }
         .s-btn.active { background: var(--accent); border-color: #fff; }
-
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
-        .n-btn { padding: 10px; border-radius: 8px; background: #444; color: #fff; border: none; font-weight: bold; }
-        #feedback { font-weight: bold; font-size: 1rem; height: 20px; margin: 5px 0; }
-
-        @media (min-width: 1000px) {
-            .fretboard { height: 300px; }
-            .marker { width: 34px; height: 34px; }
-            .dot { width: 18px; height: 18px; }
-        }
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .n-btn { padding: 12px; border-radius: 8px; background: #444; color: #fff; border: none; font-weight: bold; cursor: pointer; }
+        #feedback { font-weight: bold; height: 20px; margin: 5px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 style="font-size: 1.2rem; margin: 5px 0;">Fretboard Master</h1>
         <div class="settings">
-            <select id="inst">
-                <option value="bass4">4-String Bass (EADG)</option>
-                <option value="bass5">5-String Bass (BEADG)</option>
-                <option value="guitar">6-String Guitar (EADGBE)</option>
-            </select>
-            <select id="mode">
-                <option value="find">Find Note</option>
-                <option value="target">Target String</option>
-                <option value="id">Identify Note</option>
-            </select>
+            <select id="inst"><option value="bass4">4-String Bass</option><option value="bass5">5-String Bass</option><option value="guitar">Guitar</option></select>
+            <select id="mode"><option value="find">Find Note</option><option value="target">Target String</option><option value="id">Identify</option></select>
         </div>
-        <div style="text-align: left; margin: 5px 0; display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
-            <input type="checkbox" id="acc" style="width: 16px; height: 16px;"> 
-            <label for="acc">Include Sharps</label>
-        </div>
-        <div class="string-selector" id="toggles"></div>
-        <div class="drill-area">
-            <div id="prompt-display" style="font-size: 2.5rem; font-weight: 900; color: var(--highlight);">C</div>
-            <div id="feedback"></div>
-        </div>
-        <div class="fb-container">
-            <div class="fretboard" id="board"></div>
-        </div>
+        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 5px;" id="toggles"></div>
+        <div id="prompt-display" style="font-size: 2.5rem; font-weight: 900; color: var(--highlight);">C</div>
+        <div id="feedback"></div>
+        <div class="fb-container"><div class="fretboard" id="board"></div></div>
         <div class="btn-grid" id="btns"></div>
+        <div style="margin-top: 10px; font-size: 12px;"><input type="checkbox" id="acc"> Include Sharps</div>
     </div>
 
-    <script>
-        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const tunings = { bass4: ['E','A','D','G'], bass5: ['B','E','A','D','G'], guitar: ['E','A','D','G','B','E'] };
-        let active = [0,1,2,3], currentN = null, targetS = null;
+<script>
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const tunings = { bass4: ['E','A','D','G'], bass5: ['B','E','A','D','G'], guitar: ['E','A','D','G','B','E'] };
+    let active = [0,1,2,3], targetN = 'C', targetS = null;
 
-        function render() {
-            const b = document.getElementById('board'), inst = document.getElementById('inst').value, t = tunings[inst];
-            b.innerHTML = ''; 
-            for(let f=0; f<=12; f++) {
-                const div = document.createElement('div'); div.className = `fret ${f===0?'nut':''}`;
-                if([3,5,7,9].includes(f)) div.innerHTML = '<div class="dot"></div>';
-                if(f===12) div.innerHTML = '<div class="dot double-dot-top"></div><div class="dot double-dot-bottom"></div>';
-                t.forEach((o, s) => {
-                    const l = document.createElement('div');
-                    const isEnabled = active.includes(s);
-                    l.className = `str ${isEnabled?'':'disabled'}`;
-                    l.style.setProperty('--t', `${2.5+(t.length-s)}px`);
-                    l.dataset.n = notes[(notes.indexOf(o)+f)%12]; l.dataset.s = s;
-                    l.innerHTML = '<div class="marker"></div>';
-                    if(isEnabled) l.onclick = () => checkF(l.dataset.n, l);
-                    div.appendChild(l);
-                });
-                b.appendChild(div);
+    function render() {
+        const board = document.getElementById('board');
+        const inst = document.getElementById('inst').value;
+        const tuning = tunings[inst];
+        board.innerHTML = '';
+        
+        for (let f = 0; f <= 12; f++) {
+            const fretDiv = document.createElement('div');
+            fretDiv.className = f === 0 ? 'fret nut' : 'fret';
+            
+            if ([3,5,7,9].includes(f)) {
+                fretDiv.innerHTML = '<div class="dot"></div>';
+            } else if (f === 12) {
+                fretDiv.innerHTML = '<div class="dot double-dot-top"></div><div class="dot double-dot-bottom"></div>';
+            }
+
+            tuning.forEach((openNote, sIdx) => {
+                const isEnabled = active.includes(sIdx);
+                const noteName = notes[(notes.indexOf(openNote) + f) % 12];
+                
+                const strDiv = document.createElement('div');
+                strDiv.className = isEnabled ? 'str' : 'str disabled';
+                strDiv.onclick = () => checkF(noteName, strDiv, sIdx);
+                
+                // Fixed line thickness logic
+                const thickness = 2 + (tuning.length - sIdx);
+                strDiv.innerHTML = `<div class="str-line" style="height: ${thickness}px"></div><div class="marker"></div>`;
+                
+                if (targetS !== null && sIdx === targetS) strDiv.classList.add('target');
+                fretDiv.appendChild(strDiv);
+            });
+            board.appendChild(fretDiv);
+        }
+    }
+
+    function updateToggles() {
+        const cont = document.getElementById('toggles');
+        const t = tunings[document.getElementById('inst').value];
+        cont.innerHTML = '';
+        t.forEach((n, i) => {
+            const b = document.createElement('div');
+            b.className = active.includes(i) ? 's-btn active' : 's-btn';
+            b.innerText = n;
+            b.onclick = () => {
+                active = active.includes(i) ? (active.length > 1 ? active.filter(x => x !== i) : active) : [...active, i];
+                updateToggles(); render(); next();
+            };
+            cont.appendChild(b);
+        });
+    }
+
+    function next() {
+        const acc = document.getElementById('acc').checked;
+        const mode = document.getElementById('mode').value;
+        const pool = notes.filter(n => acc || !n.includes('#'));
+        
+        document.querySelectorAll('.active-n').forEach(e => e.classList.remove('active-n'));
+        document.getElementById('feedback').innerText = '';
+        targetS = null;
+
+        if (mode === 'id') {
+            document.getElementById('btns').style.display = 'grid';
+            document.getElementById('prompt-display').innerText = '?';
+            const all = Array.from(document.querySelectorAll('.str:not(.disabled)')).filter(s => pool.includes(notes[(notes.indexOf(tunings[document.getElementById('inst').value][s.parentElement.children.length - 1 - Array.from(s.parentElement.children).indexOf(s)]) + parseInt(Array.from(s.parentElement.parentElement.children).indexOf(s.parentElement))) % 12]));
+            // Simpler ID logic for stability
+            const allStr = document.querySelectorAll('.str:not(.disabled)');
+            const pick = allStr[Math.floor(Math.random() * allStr.length)];
+            pick.classList.add('active-n');
+            const f = Array.from(pick.parentElement.parentElement.children).indexOf(pick.parentElement);
+            const s = Array.from(pick.parentElement.children).filter(e => e.classList.contains('str')).indexOf(pick);
+            const openNote = tunings[document.getElementById('inst').value][s];
+            targetN = notes[(notes.indexOf(openNote) + f) % 12];
+        } else {
+            document.getElementById('btns').style.display = 'none';
+            targetN = pool[Math.floor(Math.random() * pool.length)];
+            document.getElementById('prompt-display').innerText = targetN;
+            if (mode === 'target') {
+                targetS = active[Math.floor(Math.random() * active.length)];
             }
         }
+        render(); // Force redraw to update target string highlights
+    }
 
-        function updateT() {
-            const c = document.getElementById('toggles'), t = tunings[document.getElementById('inst').value];
-            c.innerHTML = '';
-            t.forEach((n, i) => {
-                const b = document.createElement('div'); b.className = `s-btn ${active.includes(i)?'active':''}`;
-                b.innerText = n; b.onclick = () => {
-                    active = active.includes(i) ? (active.length>1?active.filter(x=>x!==i):active) : [...active, i];
-                    updateT(); render(); next();
-                };
-                c.appendChild(b);
-            });
+    function checkF(n, el, sIdx) {
+        if (document.getElementById('mode').value === 'id') return;
+        if (targetS !== null && sIdx !== targetS) return;
+        if (n === targetN) {
+            el.classList.add('active-n');
+            document.getElementById('feedback').innerText = "Correct! ✓";
+            document.getElementById('feedback').style.color = "#2ecc71";
+            setTimeout(next, 800);
+        } else {
+            document.getElementById('feedback').innerText = "Wrong ✗";
+            document.getElementById('feedback').style.color = "#e74c3c";
         }
+    }
 
-        function next() {
-            const acc = document.getElementById('acc').checked, pool = notes.filter(n => acc || !n.includes('#')), m = document.getElementById('mode').value;
-            document.querySelectorAll('.active-n, .target').forEach(e => e.classList.remove('active-n', 'target'));
-            document.getElementById('feedback').innerText = ''; targetS = null;
-            if(m==='id') {
-                document.getElementById('btns').style.display='grid'; document.getElementById('prompt-display').innerText='?';
-                const lines = Array.from(document.querySelectorAll('.str:not(.disabled)')).filter(l => pool.includes(l.dataset.n));
-                if(lines.length) {
-                    const p = lines[Math.floor(Math.random()*lines.length)]; p.classList.add('
+    function checkB(n) {
+        if (n === targetN) {
+            document.getElementById('feedback').innerText = "Correct! ✓";
+            document.getElementById('feedback').style.color = "#2ecc71";
+            setTimeout(next, 800);
+        } else {
+            document.getElementById('feedback').innerText = "Wrong ✗";
+            document.getElementById('feedback').style.color = "#e74c3c";
+        }
+    }
+
+    document.getElementById('inst').onchange = (e) => { active = Array.from({length: tunings[e.target.value].length}, (_,i) => i); updateToggles(); render(); next(); };
+    document.getElementById('mode').onchange = next;
+    document.getElementById('acc').onchange = () => {
+        const cont = document.getElementById('btns');
+        cont.innerHTML = '';
+        notes.filter(n => document.getElementById('acc').checked || !n.includes('#')).forEach(n => {
+            const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
+        });
+        next();
+    };
+
+    updateToggles();
+    const btnCont = document.getElementById('btns');
+    notes.filter(n => !n.includes('#')).forEach(n => {
+        const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); btnCont.appendChild(b);
+    });
+    next();
+</script>
+</body>
+</html>
