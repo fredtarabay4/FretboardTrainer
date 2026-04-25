@@ -11,37 +11,37 @@
         }
         body { 
             font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); 
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; 
             min-height: 100vh; touch-action: manipulation;
         }
         .container { width: 100%; max-width: 1400px; text-align: center; }
         
-        .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; text-align: left; }
-        select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+        .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; text-align: left; }
+        select { width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 0.9rem; cursor: pointer; }
         
-        /* THE RESPONSIVE WINDOW */
         .fb-container { 
             width: 100%; 
-            overflow-x: auto; /* Scrollable on small screens */
+            overflow-x: auto; 
             background: #111; 
-            border-radius: 12px; 
-            margin: 20px 0;
+            border-radius: 10px; 
+            margin: 15px 0;
             border: 2px solid #444;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* THE DYNAMIC BOARD */
         .fretboard { 
             display: grid; 
             background: #3d2b1f; 
-            width: 100%; /* Stretch to fill container */
-            min-width: 1000px; /* But don't get so small frets are unplayable */
-            height: 300px; 
-            grid-template-columns: 60px repeat(12, 1fr); /* Fixed Nut, Flexible Frets */
+            width: 100%; 
+            /* Reduced min-width to fit the Pixel 9 Pro XL screen better */
+            min-width: 440px; 
+            height: 240px; 
+            /* Narrow Nut (30px), then 12 equal flexible frets */
+            grid-template-columns: 30px repeat(12, 1fr); 
         }
 
         .fret { 
-            border-right: 2px solid var(--fret); 
+            border-right: 1.5px solid var(--fret); 
             position: relative; 
             display: flex; 
             flex-direction: column-reverse; 
@@ -49,39 +49,41 @@
             height: 100%;
         }
 
-        .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
+        .nut { border-right: 8px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
         
-        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
+        /* Smaller dots for the smaller frets */
+        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
         .double-dot-top { top: 25%; }
         .double-dot-bottom { top: 75%; }
 
-        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
+        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
         .str.disabled { opacity: 0.05; pointer-events: none; }
-        .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
+        .str.target { background: var(--target); box-shadow: 0 0-10px var(--target); }
         
-        .marker { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        /* Marker adjusted for smaller fret width */
+        .marker { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         .active-n .marker { display: block; }
         
-        .string-selector { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .s-btn { background: #444; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid transparent; transition: 0.2s; }
+        .string-selector { display: flex; gap: 8px; justify-content: center; margin: 10px 0; flex-wrap: wrap; }
+        .s-btn { background: #444; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-weight: bold; border: 2px solid transparent; font-size: 0.8rem; }
         .s-btn.active { background: var(--accent); border-color: #fff; }
 
-        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 10px; margin-top: 20px; width: 100%; }
-        .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-        #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; width: 100%; }
+        .n-btn { padding: 12px; border-radius: 8px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        #feedback { font-weight: bold; font-size: 1.1rem; height: 25px; margin-top: 5px; }
 
-        /* Responsive adjustments for desktop */
-        @media (min-width: 1200px) {
-            .fretboard { min-width: 100%; } /* No scrollbar on wide screens */
+        @media (min-width: 1000px) {
+            .fretboard { height: 300px; }
+            .marker { width: 34px; height: 34px; }
+            .dot { width: 18px; height: 18px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Fretboard Master</h1>
+        <h1 style="font-size: 1.5rem; margin: 0 0 10px 0;">Fretboard Master</h1>
         <div class="settings">
             <div>
-                <label style="font-size: 0.8rem; opacity: 0.7;">INSTRUMENT</label>
                 <select id="inst">
                     <option value="bass4">4-String Bass (EADG)</option>
                     <option value="bass5">5-String Bass (BEADG)</option>
@@ -89,7 +91,6 @@
                 </select>
             </div>
             <div>
-                <label style="font-size: 0.8rem; opacity: 0.7;">DRILL MODE</label>
                 <select id="mode">
                     <option value="find">Find Note</option>
                     <option value="target">Target String</option>
@@ -97,14 +98,14 @@
                 </select>
             </div>
         </div>
-        <div style="text-align: left; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="acc" style="width: 20px; height: 20px;"> 
-            <label for="acc" style="cursor: pointer;">Include Sharps</label>
+        <div style="text-align: left; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.9rem;">
+            <input type="checkbox" id="acc" style="width: 18px; height: 18px;"> 
+            <label for="acc">Include Sharps</label>
         </div>
         <div class="string-selector" id="toggles"></div>
         <div class="drill-area">
-            <div id="prompt-txt" style="font-size: 1.1rem; opacity: 0.8;">Find:</div>
-            <div id="prompt-display">C</div>
+            <div id="prompt-txt" style="font-size: 1rem; opacity: 0.8;">Find:</div>
+            <div id="prompt-display" style="font-size: 3rem; font-weight: 900; color: var(--highlight);">C</div>
             <div id="feedback"></div>
         </div>
         <div class="fb-container">
@@ -128,7 +129,7 @@
                 t.forEach((o, s) => {
                     const l = document.createElement('div');
                     l.className = `str ${active.includes(s)?'':'disabled'}`;
-                    l.style.setProperty('--t', `${3+(t.length-s)}px`);
+                    l.style.setProperty('--t', `${2.5+(t.length-s)}px`);
                     l.dataset.n = notes[(notes.indexOf(o)+f)%12]; l.dataset.s = s;
                     l.innerHTML = '<div class="marker"></div>';
                     if(active.includes(s)) l.onclick = () => checkF(l.dataset.n, l);
@@ -144,67 +145,4 @@
             t.forEach((n, i) => {
                 const b = document.createElement('div'); b.className = `s-btn ${active.includes(i)?'active':''}`;
                 b.innerText = n; b.onclick = () => {
-                    active = active.includes(i) ? (active.length>1?active.filter(x=>x!==i):active) : [...active, i];
-                    updateT(); render(); next();
-                };
-                c.appendChild(b);
-            });
-        }
-
-        function next() {
-            const acc = document.getElementById('acc').checked, pool = notes.filter(n => acc || !n.includes('#')), m = document.getElementById('mode').value;
-            document.querySelectorAll('.active-n, .target').forEach(e => e.classList.remove('active-n', 'target'));
-            document.getElementById('feedback').innerText = ''; targetS = null;
-            if(m==='id') {
-                document.getElementById('btns').style.display='grid'; document.getElementById('prompt-display').innerText='?';
-                const lines = Array.from(document.querySelectorAll('.str:not(.disabled)')).filter(l => pool.includes(l.dataset.n));
-                if(lines.length) {
-                    const p = lines[Math.floor(Math.random()*lines.length)]; p.classList.add('active-n'); currentN = p.dataset.n;
-                }
-            } else {
-                document.getElementById('btns').style.display='none'; currentN = pool[Math.floor(Math.random()*pool.length)];
-                document.getElementById('prompt-display').innerText = currentN;
-                if(m==='target') {
-                    targetS = active[Math.floor(Math.random()*active.length)];
-                    document.getElementById('prompt-txt').innerText = `Find ${currentN} on highlighted string:`;
-                    document.querySelectorAll(`.str[data-s="${targetS}"]`).forEach(s => s.classList.add('target'));
-                } else {
-                    document.getElementById('prompt-txt').innerText = `Find any ${currentN}:`;
-                }
-            }
-        }
-
-        function checkF(n, el) {
-            if(document.getElementById('mode').value==='id') return;
-            if(targetS !== null && parseInt(el.dataset.s) !== targetS) return;
-            if(n === currentN) { el.classList.add('active-n'); feedback(true); setTimeout(next, 800); }
-            else feedback(false);
-        }
-
-        function checkB(n) {
-            if(n === currentN) { feedback(true); setTimeout(next, 800); }
-            else feedback(false);
-        }
-
-        function feedback(c) {
-            const f = document.getElementById('feedback'); f.innerText = c ? "Nice! ✓" : "Wrong ✗"; f.style.color = c ? "var(--highlight)" : "var(--accent)";
-        }
-
-        document.getElementById('inst').onchange = (e) => { active = Array.from({length:tunings[e.target.value].length}, (_,i)=>i); updateT(); render(); next(); };
-        document.getElementById('mode').onchange = next;
-        document.getElementById('acc').onchange = () => {
-            const cont = document.getElementById('btns'), acc = document.getElementById('acc').checked;
-            cont.innerHTML = ''; notes.filter(n => acc || !n.includes('#')).forEach(n => {
-                const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
-            });
-            next();
-        };
-
-        updateT(); render(); 
-        const cont = document.getElementById('btns'); notes.filter(n => !n.includes('#')).forEach(n => {
-            const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
-        });
-        next();
-    </script>
-</body>
-</html>
+                    active = active.includes(i) ? (active.length>1?active
