@@ -11,22 +11,22 @@
         .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
         select { width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 14px; }
         .fb-container { width: 100%; overflow-x: auto; background: #111; border-radius: 10px; margin: 10px 0; border: 2px solid #444; -webkit-overflow-scrolling: touch; }
-        .fretboard { display: grid; background: #3d2b1f; width: 100%; min-width: 440px; height: 200px; grid-template-columns: 35px repeat(12, 1fr); }
+        .fretboard { display: grid; background: #3d2b1f; width: 100%; min-width: 440px; height: 220px; grid-template-columns: 35px repeat(12, 1fr); }
         .fret { border-right: 1.5px solid var(--fret); position: relative; display: flex; flex-direction: column-reverse; justify-content: space-around; padding: 10px 0; }
         .nut { border-right: 10px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
         .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
         .double-dot-top { top: 25%; } .double-dot-bottom { top: 75%; }
-        .str { height: 15px; width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
+        .str { height: 20px; width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
         .str-line { width: 100%; background: var(--string); pointer-events: none; }
         .disabled { opacity: 0.1; pointer-events: none; }
-        .marker { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; z-index: 3; }
+        .marker { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; z-index: 3; }
         .active-n .marker { display: block; }
-        .target .str-line { background: #ffeb3b; box-shadow: 0 0 8px #ffeb3b; }
+        .target .str-line { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; }
         .s-btn { background: #444; padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; border: 2px solid transparent; cursor: pointer; }
         .s-btn.active { background: var(--accent); border-color: #fff; }
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
         .n-btn { padding: 12px; border-radius: 8px; background: #444; color: #fff; border: none; font-weight: bold; cursor: pointer; }
-        #feedback { font-weight: bold; height: 20px; margin: 5px 0; }
+        #feedback { font-weight: bold; height: 24px; margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -46,7 +46,7 @@
 <script>
     const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const tunings = { bass4: ['E','A','D','G'], bass5: ['B','E','A','D','G'], guitar: ['E','A','D','G','B','E'] };
-    let active = [0,1,2,3], targetN = 'C', targetS = null;
+    let active = [0,1,2,3], targetN = '', currentTargetStrIdx = null;
 
     function render() {
         const board = document.getElementById('board');
@@ -57,26 +57,28 @@
         for (let f = 0; f <= 12; f++) {
             const fretDiv = document.createElement('div');
             fretDiv.className = f === 0 ? 'fret nut' : 'fret';
+            fretDiv.dataset.fret = f;
             
             if ([3,5,7,9].includes(f)) {
-                fretDiv.innerHTML = '<div class="dot"></div>';
+                const dot = document.createElement('div'); dot.className = 'dot'; fretDiv.appendChild(dot);
             } else if (f === 12) {
-                fretDiv.innerHTML = '<div class="dot double-dot-top"></div><div class="dot double-dot-bottom"></div>';
+                const dot1 = document.createElement('div'); dot1.className = 'dot double-dot-top';
+                const dot2 = document.createElement('div'); dot2.className = 'dot double-dot-bottom';
+                fretDiv.appendChild(dot1); fretDiv.appendChild(dot2);
             }
 
             tuning.forEach((openNote, sIdx) => {
                 const isEnabled = active.includes(sIdx);
                 const noteName = notes[(notes.indexOf(openNote) + f) % 12];
-                
                 const strDiv = document.createElement('div');
                 strDiv.className = isEnabled ? 'str' : 'str disabled';
-                strDiv.onclick = () => checkF(noteName, strDiv, sIdx);
+                strDiv.dataset.note = noteName;
+                strDiv.dataset.sidx = sIdx;
                 
-                // Fixed line thickness logic
                 const thickness = 2 + (tuning.length - sIdx);
                 strDiv.innerHTML = `<div class="str-line" style="height: ${thickness}px"></div><div class="marker"></div>`;
                 
-                if (targetS !== null && sIdx === targetS) strDiv.classList.add('target');
+                if (isEnabled) strDiv.onclick = () => checkF(noteName, strDiv, sIdx);
                 fretDiv.appendChild(strDiv);
             });
             board.appendChild(fretDiv);
@@ -100,78 +102,79 @@
     }
 
     function next() {
+        render(); // Always render first to clear the board
         const acc = document.getElementById('acc').checked;
         const mode = document.getElementById('mode').value;
         const pool = notes.filter(n => acc || !n.includes('#'));
         
-        document.querySelectorAll('.active-n').forEach(e => e.classList.remove('active-n'));
         document.getElementById('feedback').innerText = '';
-        targetS = null;
+        currentTargetStrIdx = null;
 
         if (mode === 'id') {
             document.getElementById('btns').style.display = 'grid';
             document.getElementById('prompt-display').innerText = '?';
-            const all = Array.from(document.querySelectorAll('.str:not(.disabled)')).filter(s => pool.includes(notes[(notes.indexOf(tunings[document.getElementById('inst').value][s.parentElement.children.length - 1 - Array.from(s.parentElement.children).indexOf(s)]) + parseInt(Array.from(s.parentElement.parentElement.children).indexOf(s.parentElement))) % 12]));
-            // Simpler ID logic for stability
-            const allStr = document.querySelectorAll('.str:not(.disabled)');
-            const pick = allStr[Math.floor(Math.random() * allStr.length)];
+            
+            const activeStrings = Array.from(document.querySelectorAll('.str:not(.disabled)'))
+                .filter(s => pool.includes(s.dataset.note));
+            
+            const pick = activeStrings[Math.floor(Math.random() * activeStrings.length)];
             pick.classList.add('active-n');
-            const f = Array.from(pick.parentElement.parentElement.children).indexOf(pick.parentElement);
-            const s = Array.from(pick.parentElement.children).filter(e => e.classList.contains('str')).indexOf(pick);
-            const openNote = tunings[document.getElementById('inst').value][s];
-            targetN = notes[(notes.indexOf(openNote) + f) % 12];
+            targetN = pick.dataset.note;
         } else {
             document.getElementById('btns').style.display = 'none';
             targetN = pool[Math.floor(Math.random() * pool.length)];
             document.getElementById('prompt-display').innerText = targetN;
             if (mode === 'target') {
-                targetS = active[Math.floor(Math.random() * active.length)];
+                currentTargetStrIdx = active[Math.floor(Math.random() * active.length)];
+                document.querySelectorAll(`.str[data-sidx="${currentTargetStrIdx}"]`).forEach(s => s.classList.add('target'));
             }
         }
-        render(); // Force redraw to update target string highlights
     }
 
     function checkF(n, el, sIdx) {
         if (document.getElementById('mode').value === 'id') return;
-        if (targetS !== null && sIdx !== targetS) return;
+        if (currentTargetStrIdx !== null && sIdx !== currentTargetStrIdx) return;
         if (n === targetN) {
             el.classList.add('active-n');
-            document.getElementById('feedback').innerText = "Correct! ✓";
-            document.getElementById('feedback').style.color = "#2ecc71";
+            showFeedback(true);
             setTimeout(next, 800);
         } else {
-            document.getElementById('feedback').innerText = "Wrong ✗";
-            document.getElementById('feedback').style.color = "#e74c3c";
+            showFeedback(false);
         }
     }
 
     function checkB(n) {
         if (n === targetN) {
-            document.getElementById('feedback').innerText = "Correct! ✓";
-            document.getElementById('feedback').style.color = "#2ecc71";
+            showFeedback(true);
             setTimeout(next, 800);
         } else {
-            document.getElementById('feedback').innerText = "Wrong ✗";
-            document.getElementById('feedback').style.color = "#e74c3c";
+            showFeedback(false);
         }
     }
 
-    document.getElementById('inst').onchange = (e) => { active = Array.from({length: tunings[e.target.value].length}, (_,i) => i); updateToggles(); render(); next(); };
+    function showFeedback(correct) {
+        const f = document.getElementById('feedback');
+        f.innerText = correct ? "Correct! ✓" : "Wrong ✗";
+        f.style.color = correct ? "#2ecc71" : "#e74c3c";
+    }
+
+    document.getElementById('inst').onchange = (e) => { 
+        active = Array.from({length: tunings[e.target.value].length}, (_,i) => i); 
+        updateToggles(); next(); 
+    };
     document.getElementById('mode').onchange = next;
-    document.getElementById('acc').onchange = () => {
+    document.getElementById('acc').onchange = () => { renderButtons(); next(); };
+
+    function renderButtons() {
         const cont = document.getElementById('btns');
         cont.innerHTML = '';
         notes.filter(n => document.getElementById('acc').checked || !n.includes('#')).forEach(n => {
             const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
         });
-        next();
-    };
+    }
 
     updateToggles();
-    const btnCont = document.getElementById('btns');
-    notes.filter(n => !n.includes('#')).forEach(n => {
-        const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); btnCont.appendChild(b);
-    });
+    renderButtons();
     next();
 </script>
 </body>
