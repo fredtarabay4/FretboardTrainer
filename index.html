@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Fretboard Master Pro</title>
     <style>
         :root { 
@@ -14,31 +14,30 @@
             margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
             min-height: 100vh; touch-action: manipulation;
         }
-        .container { width: 100%; max-width: 1000px; text-align: center; }
+        .container { width: 100%; max-width: 1400px; text-align: center; }
         
-        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; text-align: left; }
-        select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; }
+        .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; text-align: left; }
+        select { width: 100%; padding: 12px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; }
         
-        /* The Window */
+        /* THE RESPONSIVE WINDOW */
         .fb-container { 
             width: 100%; 
-            overflow-x: auto; 
+            overflow-x: auto; /* Scrollable on small screens */
             background: #111; 
             border-radius: 12px; 
             margin: 20px 0;
             border: 2px solid #444;
-            display: block;
-            white-space: nowrap;
             -webkit-overflow-scrolling: touch;
         }
 
-        /* The Board - Fixed Width Math: 13 columns * 90px = 1170px */
+        /* THE DYNAMIC BOARD */
         .fretboard { 
             display: grid; 
             background: #3d2b1f; 
-            width: 1170px; 
-            height: 280px; 
-            grid-template-columns: repeat(13, 90px);
+            width: 100%; /* Stretch to fill container */
+            min-width: 1000px; /* But don't get so small frets are unplayable */
+            height: 300px; 
+            grid-template-columns: 60px repeat(12, 1fr); /* Fixed Nut, Flexible Frets */
         }
 
         .fret { 
@@ -50,46 +49,57 @@
             height: 100%;
         }
 
-        /* Distinct Nut */
-        .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); width: 90px; }
+        .nut { border-right: 12px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
         
-        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; }
+        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 18px; height: 18px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
         .double-dot-top { top: 25%; }
         .double-dot-bottom { top: 75%; }
 
-        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
+        .str { height: var(--t); background: var(--string); width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; transition: background 0.2s; }
         .str.disabled { opacity: 0.05; pointer-events: none; }
         .str.target { background: var(--target); box-shadow: 0 0 15px var(--target); }
         
-        .marker { position: absolute; width: 36px; height: 36px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .marker { position: absolute; width: 34px; height: 34px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 3px solid #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
         .active-n .marker { display: block; }
         
         .string-selector { display: flex; gap: 10px; justify-content: center; margin: 15px 0; flex-wrap: wrap; }
-        .s-btn { background: #444; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid transparent; }
+        .s-btn { background: #444; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid transparent; transition: 0.2s; }
         .s-btn.active { background: var(--accent); border-color: #fff; }
 
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 10px; margin-top: 20px; width: 100%; }
         .n-btn { padding: 15px; border-radius: 10px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
         #feedback { font-weight: bold; font-size: 1.2rem; height: 30px; margin-top: 10px; }
+
+        /* Responsive adjustments for desktop */
+        @media (min-width: 1200px) {
+            .fretboard { min-width: 100%; } /* No scrollbar on wide screens */
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Fretboard Master</h1>
         <div class="settings">
-            <select id="inst">
-                <option value="bass4">4-String Bass (EADG)</option>
-                <option value="bass5">5-String Bass (BEADG)</option>
-                <option value="guitar">6-String Guitar (EADGBE)</option>
-            </select>
-            <select id="mode">
-                <option value="find">Find Note</option>
-                <option value="target">Target String</option>
-                <option value="id">Identify Note</option>
-            </select>
+            <div>
+                <label style="font-size: 0.8rem; opacity: 0.7;">INSTRUMENT</label>
+                <select id="inst">
+                    <option value="bass4">4-String Bass (EADG)</option>
+                    <option value="bass5">5-String Bass (BEADG)</option>
+                    <option value="guitar">6-String Guitar (EADGBE)</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.8rem; opacity: 0.7;">DRILL MODE</label>
+                <select id="mode">
+                    <option value="find">Find Note</option>
+                    <option value="target">Target String</option>
+                    <option value="id">Identify Note</option>
+                </select>
+            </div>
         </div>
         <div style="text-align: left; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-            <input type="checkbox" id="acc" style="width: 20px; height: 20px;"> Include Sharps
+            <input type="checkbox" id="acc" style="width: 20px; height: 20px;"> 
+            <label for="acc" style="cursor: pointer;">Include Sharps</label>
         </div>
         <div class="string-selector" id="toggles"></div>
         <div class="drill-area">
