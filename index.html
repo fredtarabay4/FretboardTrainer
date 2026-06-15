@@ -3,179 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Fretboard Master</title>
+    <title>Fretboard Trainer</title>
     <style>
-        :root { --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; }
+        :root { 
+            --bg: #1a1a1a; --card: #2d2d2d; --accent: #e74c3c; --text: #f0f0f0; 
+            --fret: #c0c0c0; --nut: #000; --string: #ddd; --highlight: #2ecc71; --target: #ffeb3b;
+            --scale-bg: #3498db; --scale-border: #2980b9; --root-highlight: #ff3333;
+        }
         body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; touch-action: manipulation; }
         .container { width: 100%; max-width: 1200px; text-align: center; }
-        .settings { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        select { width: 100%; padding: 10px; background: #444; color: #fff; border: none; border-radius: 8px; font-size: 14px; }
+        
+        .panel { background: var(--card); padding: 15px; border-radius: 8px; margin-bottom: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; text-align: left; }
+        label { font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 4px; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input[type="checkbox"] { width: 100%; padding: 8px; background: #444; color: #fff; border: none; border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
+        input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .check-group { display: flex; align-items: center; gap: 8px; height: 38px; }
+
+        /* Fretboard Workspace */
         .fb-container { width: 100%; overflow-x: auto; background: #111; border-radius: 10px; margin: 10px 0; border: 2px solid #444; -webkit-overflow-scrolling: touch; }
-        .fretboard { display: grid; background: #3d2b1f; width: 100%; min-width: 440px; height: 220px; grid-template-columns: 35px repeat(12, 1fr); }
-        .fret { border-right: 1.5px solid var(--fret); position: relative; display: flex; flex-direction: column-reverse; justify-content: space-around; padding: 10px 0; }
-        .nut { border-right: 10px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
-        .dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 12px; height: 12px; background: #888; border-radius: 50%; z-index: 1; pointer-events: none; }
+        .fretboard { display: grid; background: #3d2b1f; width: 100%; min-width: 440px; height: 220px; grid-template-columns: 35px repeat(12, 1fr); position: relative; }
+        
+        .fret { border-right: 1.5px solid var(--fret); position: relative; display: flex; flex-direction: column; justify-content: space-around; padding: 5px 0; }
+        .nut { border-right: 8px solid var(--nut) !important; background: rgba(0,0,0,0.4); }
+        
+        /* Traditional Markers */
+        .inlay-dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 12px; height: 12px; background: #555; border-radius: 50%; pointer-events: none; z-index: 1; }
         .double-dot-top { top: 25%; } .double-dot-bottom { top: 75%; }
-        .str { height: 20px; width: 100%; position: relative; z-index: 2; cursor: pointer; display: flex; align-items: center; }
-        .str-line { width: 100%; background: var(--string); pointer-events: none; }
-        .disabled { opacity: 0.1; pointer-events: none; }
-        .marker { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; z-index: 3; }
+        
+        /* Interactive String Layers */
+        .str { height: 24px; width: 100%; position: relative; display: flex; align-items: center; cursor: pointer; z-index: 2; }
+        .str-line { width: 100%; background: #aaa; pointer-events: none; }
+        
+        /* Interactive Highlight Overlays */
+        .marker { position: absolute; width: 24px; height: 24px; border-radius: 50%; background: var(--highlight); left: 50%; transform: translateX(-50%); display: none; border: 2px solid #fff; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
         .active-n .marker { display: block; }
-        .target .str-line { background: #ffeb3b; box-shadow: 0 0 10px #ffeb3b; }
-        .s-btn { background: #444; padding: 6px 12px; border-radius: 15px; font-weight: bold; font-size: 12px; border: 2px solid transparent; cursor: pointer; }
-        .s-btn.active { background: var(--accent); border-color: #fff; }
-        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
-        .n-btn { padding: 12px; border-radius: 8px; background: #444; color: #fff; border: none; font-weight: bold; cursor: pointer; }
-        #feedback { font-weight: bold; height: 24px; margin: 5px 0; }
+        
+        /* Interactive Scale Node Overlays */
+        .scale-ghost { 
+            position: absolute; width: 22px; height: 22px; border-radius: 50%; 
+            background: var(--scale-bg); border: 1px solid var(--scale-border);
+            left: 50%; transform: translateX(-50%); z-index: 3; display: none; 
+            align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #fff; pointer-events: none; 
+        }
+        .in-scale .scale-ghost { display: flex; }
+        .scale-root-note .scale-ghost { border: 2.5px solid var(--root-highlight); box-shadow: 0 0 8px var(--root-highlight); font-weight: 900; }
+        
+        /* Prompt HUD */
+        .hud-display { display: flex; justify-content: space-between; align-items: center; padding: 0 10px; margin: 5px 0; min-height: 50px; }
+        #prompt-txt { font-size: 1.1rem; font-weight: bold; color: #aaa; margin: 0; }
+        #prompt-display { font-size: 2.8rem; font-weight: 900; color: var(--highlight); margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        #feedback { font-weight: bold; font-size: 1.2rem; min-height: 24px; margin: 2px 0; }
+        
+        /* Input Node Button Selection Matrix */
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; width: 100%; }
+        .n-btn { padding: 12px; border-radius: 6px; background: #444; color: #fff; border: none; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: background 0.2s; }
+        .n-btn:hover { background: #555; }
+        
+        @media (min-width: 1000px) { .fretboard { height: 280px; } .marker { width: 32px; height: 32px; } .scale-ghost { width: 28px; height: 28px; font-size: 12px; } .inlay-dot { width: 16px; height: 16px; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="settings">
-            <select id="inst"><option value="bass4">4-String Bass</option><option value="bass5">5-String Bass</option><option value="guitar">Guitar</option></select>
-            <select id="mode"><option value="find">Find Note</option><option value="target">Target String</option><option value="id">Identify</option></select>
+        <h1 style="font-size: 1.5rem; margin: 5px 0; text-align: left; border-left: 4px solid var(--accent); padding-left: 8px;">Fretboard Trainer</h1>
+        
+        <div class="panel">
+            <div><label>Instrument</label><select id="inst"></select></div>
+            <div><label>Trainer Mode</label><select id="mode">
+                <option value="find">Find Note Drill</option>
+                <option value="id">Identify Note Drill</option>
+                <option value="scales">Scales Reference Layout</option>
+            </select></div>
+            <div><label>Active Target String</label><select id="drillStr"></select></div>
+            <div class="check-group" id="acc-wrapper">
+                <input type="checkbox" id="acc">
+                <label for="acc" style="margin-bottom: 0; cursor: pointer;">Include Accidentals</label>
+            </div>
         </div>
-        <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 5px;" id="toggles"></div>
-        <div id="prompt-display" style="font-size: 2.5rem; font-weight: 900; color: var(--highlight);">C</div>
+
+        <div class="panel" id="scale-controls">
+            <div><label>Scale Blueprint Key</label><select id="scaleRoot"></select></div>
+            <div><label>Pattern Matrix Shape</label><select id="scaleType">
+                <option value="none">No Scale Mask</option>
+                <option value="major">Major (Ionian)</option>
+                <option value="minor">Natural Minor</option>
+                <option value="majPent">Major Pentatonic</option>
+                <option value="minPent">Minor Pentatonic</option>
+            </select></div>
+            <div class="check-group">
+                <input type="checkbox" id="hideNotes">
+                <label for="hideNotes" style="margin-bottom: 0; cursor: pointer;">Mask Note Characters</label>
+            </div>
+        </div>
+
+        <div class="hud-display">
+            <h2 id="prompt-txt">Drill Initialization...</h2>
+            <div id="prompt-display">-</div>
+        </div>
         <div id="feedback"></div>
+
         <div class="fb-container"><div class="fretboard" id="board"></div></div>
         <div class="btn-grid" id="btns"></div>
-        <div style="margin-top: 10px; font-size: 12px;"><input type="checkbox" id="acc"> Include Sharps</div>
     </div>
 
-<script>
-    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const tunings = { bass4: ['E','A','D','G'], bass5: ['B','E','A','D','G'], guitar: ['E','A','D','G','B','E'] };
-    let active = [0,1,2,3], targetN = '', currentTargetStrIdx = null;
-
-    function render() {
-        const board = document.getElementById('board');
-        const inst = document.getElementById('inst').value;
-        const tuning = tunings[inst];
-        board.innerHTML = '';
-        
-        for (let f = 0; f <= 12; f++) {
-            const fretDiv = document.createElement('div');
-            fretDiv.className = f === 0 ? 'fret nut' : 'fret';
-            fretDiv.dataset.fret = f;
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
             
-            if ([3,5,7,9].includes(f)) {
-                const dot = document.createElement('div'); dot.className = 'dot'; fretDiv.appendChild(dot);
-            } else if (f === 12) {
-                const dot1 = document.createElement('div'); dot1.className = 'dot double-dot-top';
-                const dot2 = document.createElement('div'); dot2.className = 'dot double-dot-bottom';
-                fretDiv.appendChild(dot1); fretDiv.appendChild(dot2);
-            }
-
-            tuning.forEach((openNote, sIdx) => {
-                const isEnabled = active.includes(sIdx);
-                const noteName = notes[(notes.indexOf(openNote) + f) % 12];
-                const strDiv = document.createElement('div');
-                strDiv.className = isEnabled ? 'str' : 'str disabled';
-                strDiv.dataset.note = noteName;
-                strDiv.dataset.sidx = sIdx;
-                
-                const thickness = 2 + (tuning.length - sIdx);
-                strDiv.innerHTML = `<div class="str-line" style="height: ${thickness}px"></div><div class="marker"></div>`;
-                
-                if (isEnabled) strDiv.onclick = () => checkF(noteName, strDiv, sIdx);
-                fretDiv.appendChild(strDiv);
-            });
-            board.appendChild(fretDiv);
-        }
-    }
-
-    function updateToggles() {
-        const cont = document.getElementById('toggles');
-        const t = tunings[document.getElementById('inst').value];
-        cont.innerHTML = '';
-        t.forEach((n, i) => {
-            const b = document.createElement('div');
-            b.className = active.includes(i) ? 's-btn active' : 's-btn';
-            b.innerText = n;
-            b.onclick = () => {
-                active = active.includes(i) ? (active.length > 1 ? active.filter(x => x !== i) : active) : [...active, i];
-                updateToggles(); render(); next();
+            const tunings = { 
+                bass4: ['G', 'D', 'A', 'E'], 
+                bass5: ['G', 'D', 'A', 'E', 'B'], 
+                guitar: ['E', 'B', 'G', 'D', 'A', 'E'] 
             };
-            cont.appendChild(b);
-        });
-    }
-
-    function next() {
-        render(); // Always render first to clear the board
-        const acc = document.getElementById('acc').checked;
-        const mode = document.getElementById('mode').value;
-        const pool = notes.filter(n => acc || !n.includes('#'));
-        
-        document.getElementById('feedback').innerText = '';
-        currentTargetStrIdx = null;
-
-        if (mode === 'id') {
-            document.getElementById('btns').style.display = 'grid';
-            document.getElementById('prompt-display').innerText = '?';
+            const SCALE_INTERVALS = { 
+                major: [0, 2, 4, 5, 7, 9, 11], 
+                minor: [0, 2, 3, 5, 7, 8, 10], 
+                majPent: [0, 2, 4, 7, 9], 
+                minPent: [0, 3, 5, 7, 10] 
+            };
             
-            const activeStrings = Array.from(document.querySelectorAll('.str:not(.disabled)'))
-                .filter(s => pool.includes(s.dataset.note));
-            
-            const pick = activeStrings[Math.floor(Math.random() * activeStrings.length)];
-            pick.classList.add('active-n');
-            targetN = pick.dataset.note;
-        } else {
-            document.getElementById('btns').style.display = 'none';
-            targetN = pool[Math.floor(Math.random() * pool.length)];
-            document.getElementById('prompt-display').innerText = targetN;
-            if (mode === 'target') {
-                currentTargetStrIdx = active[Math.floor(Math.random() * active.length)];
-                document.querySelectorAll(`.str[data-sidx="${currentTargetStrIdx}"]`).forEach(s => s.classList.add('target'));
+            let targetNote = '';
+            let targetStringIndex = null;
+            let targetFretIndex = null;
+
+            // 1. POPULATE SELECT DROPDOWNS ONCE ON INITIAL BOOT
+            const instSelect = document.getElementById('inst');
+            Object.keys(tunings).forEach(k => {
+                const o = document.createElement('option'); o.value = k;
+                o.innerText = k === 'bass4' ? '4-String Bass (EADG)' : k === 'bass5' ? '5-String Bass (BEADG)' : '6-String Guitar (EADGBE)';
+                instSelect.appendChild(o);
+            });
+
+            const rootSelect = document.getElementById('scaleRoot');
+            notes.forEach(n => { const o = document.createElement('option'); o.value = n; o.innerText = n; rootSelect.appendChild(o); });
+
+            // Dynamically build string option dropdown parameters based strictly on choices
+            function updateDrillStringSelector() {
+                const select = document.getElementById('drillStr');
+                const preservedVal = select.value || 'all';
+                select.innerHTML = '<option value="all">All Strings Matrix</option>';
+                const currentTuning = tunings[instSelect.value];
+                
+                currentTuning.forEach((openNote, idx) => {
+                    const o = document.createElement('option'); o.value = idx;
+                    o.innerText = `String ${idx + 1} (${openNote})`;
+                    select.appendChild(o);
+                });
+                
+                if(Array.from(select.options).some(o => o.value === preservedVal)) {
+                    select.value = preservedVal;
+                } else {
+                    select.value = 'all';
+                }
             }
-        }
-    }
 
-    function checkF(n, el, sIdx) {
-        if (document.getElementById('mode').value === 'id') return;
-        if (currentTargetStrIdx !== null && sIdx !== currentTargetStrIdx) return;
-        if (n === targetN) {
-            el.classList.add('active-n');
-            showFeedback(true);
-            setTimeout(next, 800);
-        } else {
-            showFeedback(false);
-        }
-    }
+            // 2. MAIN RENDERING SUBSYSTEM
+            function render() {
+                const board = document.getElementById('board');
+                const inst = instSelect.value;
+                const tuning = tunings[inst];
+                const mode = document.getElementById('mode').value;
+                const scaleRoot = document.getElementById('scaleRoot').value;
+                const scaleType = document.getElementById('scaleType').value;
+                const hideNotes = document.getElementById('hideNotes').checked;
+                
+                board.innerHTML = '';
+                
+                for (let f = 0; f <= 12; f++) {
+                    const fretDiv = document.createElement('div');
+                    fretDiv.className = f === 0 ? 'fret nut' : 'fret';
+                    
+                    if ([3,5,7,9].includes(f)) {
+                        const dot = document.createElement('div'); dot.className = 'inlay-dot'; fretDiv.appendChild(dot);
+                    } else if (f === 12) {
+                        const dot1 = document.createElement('div'); dot1.className = 'inlay-dot double-dot-top';
+                        const dot2 = document.createElement('div'); dot2.className = 'inlay-dot double-dot-bottom';
+                        fretDiv.appendChild(dot1); fretDiv.appendChild(dot2);
+                    }
 
-    function checkB(n) {
-        if (n === targetN) {
-            showFeedback(true);
-            setTimeout(next, 800);
-        } else {
-            showFeedback(false);
-        }
-    }
+                    tuning.forEach((openNote, sIdx) => {
+                        const noteIndex = (notes.indexOf(openNote) + f) % 12;
+                        const noteName = notes[noteIndex];
+                        
+                        const strDiv = document.createElement('div');
+                        strDiv.className = 'str';
+                        strDiv.dataset.note = noteName;
+                        strDiv.dataset.sidx = sIdx;
+                        strDiv.dataset.fret = f;
+                        
+                        const thickness = 1.5 + (sIdx * 0.8);
+                        
+                        let insideScalePattern = false;
+                        let isScaleRoot = false;
+                        
+                        if (scaleType !== 'none') {
+                            const rootDistance = (noteIndex - notes.indexOf(scaleRoot) + 12) % 12;
+                            if (SCALE_INTERVALS[scaleType].includes(rootDistance)) {
+                                insideScalePattern = true;
+                                if (rootDistance === 0) isScaleRoot = true;
+                            }
+                        }
+                        
+                        if (insideScalePattern) {
+                            strDiv.classList.add('in-scale');
+                            if (isScaleRoot) strDiv.classList.add('scale-root-note');
+                        }
+                        
+                        // Structural rule condition toggle values
+                        const displayLabel = (mode === 'scales' || !hideNotes) ? noteName : '';
+                        
+                        strDiv.innerHTML = `
+                            <div class="str-line" style="height: ${thickness}px"></div>
+                            <div class="scale-ghost">${displayLabel}</div>
+                            <div class="marker"></div>
+                        `;
+                        
+                        strDiv.onclick = () => handleFretboardClick(noteName, sIdx, f, strDiv);
+                        fretDiv.appendChild(strDiv);
+                    });
+                    board.appendChild(fretDiv);
+                }
+            }
 
-    function showFeedback(correct) {
-        const f = document.getElementById('feedback');
-        f.innerText = correct ? "Correct! ✓" : "Wrong ✗";
-        f.style.color = correct ? "#2ecc71" : "#e74c3c";
-    }
+            // 3. EVENT DRIVEN GAME CONTROL LAYER
+            function next() {
+                const mode = document.getElementById('mode').value;
+                const currentTuning = tunings[instSelect.value];
+                const drillStrSelection = document.getElementById('drillStr').value;
+                const includeAccidentals = document.getElementById('acc').checked;
+                const scaleType = document.getElementById('scaleType').value;
+                const scaleRoot = document.getElementById('scaleRoot').value;
+                
+                document.getElementById('feedback').innerText = '';
+                targetStringIndex = null;
+                targetFretIndex = null;
 
-    document.getElementById('inst').onchange = (e) => { 
-        active = Array.from({length: tunings[e.target.value].length}, (_,i) => i); 
-        updateToggles(); next(); 
-    };
-    document.getElementById('mode').onchange = next;
-    document.getElementById('acc').onchange = () => { renderButtons(); next(); };
+                let activeNotePool = notes.filter(n => includeAccidentals || !n.includes('#'));
+                
+                if (mode !== 'scales' && scaleType !== 'none') {
+                    activeNotePool = notes.filter(n => {
+                        const dist = (notes.indexOf(n) - notes.indexOf(scaleRoot) + 12) % 12;
+                        return SCALE_INTERVALS[scaleType].includes(dist);
+                    });
+                }
 
-    function renderButtons() {
-        const cont = document.getElementById('btns');
-        cont.innerHTML = '';
-        notes.filter(n => document.getElementById('acc').checked || !n.includes('#')).forEach(n => {
-            const b = document.createElement('button'); b.className = 'n-btn'; b.innerText = n; b.onclick = () => checkB(n); cont.appendChild(b);
+                if (mode === 'scales') {
+                    document.getElementById('prompt-txt').innerText = "Reference Layout Mode Active:";
+                    document.getElementById('prompt-display').innerText = "Scale";
+                    document.getElementById('btns').style.display = 'none';
+                    document.getElementById('acc-wrapper').style.visibility = 'hidden';
+                    render();
+                    return;
+                }
+                
+                document.getElementById('acc-wrapper').style.visibility = (scaleType === 'none') ? 'visible' : 'hidden';
+
+                let validTargets = [];
+                for (let f = 0; f <= 12; f++) {
+                    currentTuning.forEach((openNote, sIdx) => {
+                        if (drillStrSelection !== 'all' && parseInt(drillStrSelection) !== sIdx) return;
+                        
+                        const nStr = notes[(notes.indexOf(openNote) + f) % 12];
+                        if (activeNotePool.includes(nStr)) {
+                            validTargets.push({ note: nStr, string: sIdx, fret: f });
+                        }
+                    });
+                }
+
+                if (validTargets.length === 0) {
+                    targetNote = 'C'; targetStringIndex = 0; targetFretIndex = 5;
+                } else {
+                    const selectedArchetype = validTargets[Math.floor(Math.random() * validTargets.length)];
+                    targetNote = selectedArchetype.note;
+                    targetStringIndex = selectedArchetype.string;
+                    targetFretIndex = selectedArchetype.fret;
+                }
+
+                render(); // Clear any existing UI flags
+
+                if (mode === 'find') {
+                    document.getElementById('btns').style.display = 'none';
+                    document.getElementById('prompt-txt').innerText = drillStrSelection !== 'all' ? `Find note on highlighted string line:` : `Find the location node:`;
+                    document.getElementById('prompt-display').innerText = targetNote;
+                } else if (mode === 'id') {
+                    document.getElementById('prompt-txt').innerText = "Identify note flashing at highlighted marker:";
+                    document.getElementById('prompt-display').innerText = "?";
+                    renderInputButtons(activeNotePool);
+                    
+                    const matchElement = document.querySelector(`.str[data-sidx="${targetStringIndex}"][data-fret="${targetFretIndex}"]`);
+                    if (matchElement) matchElement.classList.add('active-n');
+                }
+            }
+
+            function renderInputButtons(pool) {
+                const container = document.getElementById('btns');
+                container.innerHTML = '';
+                container.style.display = 'grid';
+                
+                pool.forEach(n => {
+                    const b = document.createElement('button');
+                    b.className = 'n-btn'; b.innerText = n;
+                    b.onclick = () => handleInputButtonClick(n);
+                    container.appendChild(b);
+                });
+            }
+
+            function handleFretboardClick(noteName, sIdx, fret, element) {
+                if (document.getElementById('mode').value !== 'find') return;
+                const drillStrSelection = document.getElementById('drillStr').value;
+                if (drillStrSelection !== 'all' && parseInt(drillStrSelection) !== sIdx) return;
+                
+                if (noteName === targetNote) {
+                    element.classList.add('active-n');
+                    triggerFeedback(true);
+                    setTimeout(next, 900);
+                } else {
+                    triggerFeedback(false);
+                }
+            }
+
+            function handleInputButtonClick(noteValue) {
+                if (noteValue === targetNote) {
+                    triggerFeedback(true);
+                    setTimeout(next, 900);
+                } else {
+                    triggerFeedback(false);
+                }
+            }
+
+            function triggerFeedback(isCorrect) {
+                const el = document.getElementById('feedback');
+                el.innerText = isCorrect ? "Nice job! ✓" : "Try again ✗";
+                el.style.color = isCorrect ? "var(--highlight)" : "var(--accent)";
+            }
+
+            // Bind pure listener tracking hooks (No loop mutations)
+            document.getElementById('inst').onchange = () => { updateDrillStringSelector(); next(); };
+            document.getElementById('mode').onchange = () => {
+                if(document.getElementById('mode').value === 'scales') {
+                    document.getElementById('hideNotes').checked = false;
+                }
+                next();
+            };
+            document.getElementById('drillStr').onchange = next;
+            document.getElementById('acc').onchange = next;
+            document.getElementById('scaleRoot').onchange = render;
+            document.getElementById('scaleType').onchange = next;
+            document.getElementById('hideNotes').onchange = render;
+
+            // Operational Setup Boot execution sequences
+            updateDrillStringSelector();
+            next();
         });
-    }
-
-    updateToggles();
-    renderButtons();
-    next();
-</script>
+    </script>
 </body>
 </html>
